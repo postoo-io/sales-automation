@@ -1,5 +1,7 @@
 # sales-automation
 
+**현재 버전**: [v0.2.0](https://github.com/postoo-io/sales-automation/releases/tag/v0.2.0)
+
 Claude Code 플러그인. B2B 영업 워크플로우(리드 검증 → 콜 준비/요약 → 견적 → 메일 → 일일 브리핑)를 Gmail, Google Drive, Google Calendar, Slack, [Pluuug](https://pluuug.com)와 연동해 한 곳에서 처리합니다.
 
 돈이나 고객에게 도달하는 작업(메일 발송, 견적 발행, 의뢰 히스토리 기록, Todo 생성)은 **항상 사용자 승인을 거친 뒤에만** 실행됩니다.

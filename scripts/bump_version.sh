@@ -72,9 +72,10 @@ PY
 # heredoc placeholder substitution — keeps the script paths editable.
 _set_version_py() {
   local new="$1"
-  PLUGIN_JSON="$PLUGIN_JSON" MARKETPLACE_JSON="$MARKETPLACE_JSON" NEW_VER="$new" \
+  PLUGIN_JSON="$PLUGIN_JSON" MARKETPLACE_JSON="$MARKETPLACE_JSON" \
+  README_MD="$REPO_ROOT/README.md" NEW_VER="$new" \
   python3 - <<'PY'
-import json, os
+import json, os, re
 new = os.environ["NEW_VER"]
 
 # plugin.json — single top-level version
@@ -95,6 +96,32 @@ for plugin in mp.get("plugins", []):
 with open(os.environ["MARKETPLACE_JSON"], "w", encoding="utf-8") as f:
     json.dump(mp, f, indent=4, ensure_ascii=False)
     f.write("\n")
+
+# README.md — replace any "현재 버전: v..." or "Current version: v..." line,
+# including the release-tag link if present.
+readme_path = os.environ["README_MD"]
+if os.path.isfile(readme_path):
+    with open(readme_path, encoding="utf-8") as f:
+        text = f.read()
+    repl_tag_link = (
+        r"\g<prefix>v" + new + r"\g<sep>"
+        r"https://github.com/postoo-io/sales-automation/releases/tag/v" + new + r")"
+    )
+    new_text = re.sub(
+        r"(?P<prefix>\*\*(?:현재 버전|Current version)\*\*\s*:\s*\[)v\d+\.\d+\.\d+(?P<sep>\]\()"
+        r"https://github\.com/postoo-io/sales-automation/releases/tag/v\d+\.\d+\.\d+\)",
+        repl_tag_link,
+        text,
+    )
+    # Fallback: plain "**현재 버전**: vX.Y.Z" without link
+    new_text = re.sub(
+        r"(\*\*(?:현재 버전|Current version)\*\*\s*:\s*)v\d+\.\d+\.\d+",
+        r"\1v" + new,
+        new_text,
+    )
+    if new_text != text:
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write(new_text)
 PY
 }
 
