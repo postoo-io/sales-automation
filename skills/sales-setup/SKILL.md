@@ -291,4 +291,72 @@ rendered, missing = render(template_text, ctx, warn=True)
 | **call-summary** | 후속 메일 / 의뢰 메모 작성 시 `brand.tone` / `brand.language` 유지 |
 | **daily-briefing** | 영업 담당자 표기 / 회사 표시명 등 일관성 |
 
-각 스킬은 **있으면 쓰고 없으면 무시**가 원칙입니다. 프로필이 없어도 모든 스킬은 동작하며, 다만 자기소개·서명·기본값이 generic하게 나옵니다.
+활용 정책: **있으면 쓰고 없으면 무시 — 단, 발송·발행에 필요한 최소치는 강제**. 자세한 차단 규칙은 아래 Part 4 참조.
+
+---
+
+# Part 4 — Setup Gate (다른 스킬 사전 차단)
+
+다른 영업 스킬은 **실행 직전 `scripts/check_setup.py`로 setup 충족 여부를 검증**한 뒤 진행합니다. 미달이면 `sales-setup` 실행을 안내하고 중단합니다 — 이는 placeholder가 남은 메일이 발송되거나 Pluuug 401이 떨어지는 일을 막기 위함입니다.
+
+## 3단계 게이트
+
+| 레벨 | 충족 조건 | 차단 대상 |
+|---|---|---|
+| **L0** | credentials.json (PLUUUG_API_KEY + PLUUUG_SECRET_KEY) | account-research, call-prep, call-summary, daily-briefing, email-send, quote-writing — **모든 Pluuug 호출** |
+| **L1** | L0 + team[active].name·email·signature + company.displayName | call-summary, email-send, quote-writing — **고객 발송·기록 산출물** |
+| **L2** | L1 + brand.tagline + brand.strengths + defaults.paymentTerms | (차단 없음, 경고만) generic 표현 회피 |
+
+L0는 **HARD** 게이트 — 통과하지 못하면 어떤 스킬도 진행 불가. L1은 발송/발행 스킬에만 HARD. L2는 SOFT (워닝).
+
+## 사용 방법
+
+```bash
+# 사람이 읽는 표
+skills/sales-setup/scripts/check_setup.py --level L1
+
+# CI/스크립트용 (exit code만)
+skills/sales-setup/scripts/check_setup.py --level L1 --quiet
+echo "exit: $?"   # 0=pass, 1=block
+
+# 머신용 JSON
+skills/sales-setup/scripts/check_setup.py --level L2 --json
+```
+
+## 영업 스킬에서 사전 점검 패턴
+
+각 영업 스킬은 본문 절차 0단계에 다음을 명시합니다:
+
+```bash
+if ! skills/sales-setup/scripts/check_setup.py --level L1 --quiet; then
+  echo "Setup이 충분하지 않습니다. sales-setup 스킬을 먼저 실행해주세요."
+  echo "부족 항목 확인: skills/sales-setup/scripts/check_setup.py --level L1"
+  exit 1
+fi
+```
+
+각 스킬의 요구 레벨:
+
+| 스킬 | 요구 레벨 |
+|---|---|
+| account-research | L0 (Pluuug GET만) |
+| call-prep | L0 (Pluuug GET + 외부 데이터 읽기) |
+| daily-briefing | L0 (읽기 전용) |
+| call-summary | L1 (의뢰 히스토리·Todo 저장에 me.* 필요) |
+| email-send | L1 (메일 발송에 me.signature·company.displayName 필수) |
+| quote-writing | L1 (견적서 공급자에 company.*·team[active].* 필수) |
+
+## 차단 시 사용자에게 보여줄 안내
+
+스킬 진입 시 게이트 실패하면:
+
+```
+이 스킬은 sales-setup이 완료돼 있어야 합니다 (요구 레벨: <L0|L1>).
+부족한 항목이 있어 진행할 수 없습니다.
+
+확인: skills/sales-setup/scripts/check_setup.py --level <레벨>
+설치: skills/sales-setup/scripts/install_credentials.py  (키)
+설치: skills/sales-setup/scripts/profile.py              (프로필)
+```
+
+추측해서 채우거나, 빈 값으로 발송하지 않습니다.

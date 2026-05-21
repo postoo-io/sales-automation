@@ -5,6 +5,9 @@ description: 영업 메일을 작성·발송·기록합니다. "메일 보내줘
 
 # 메일 작성·고도화·발송 (Email Send)
 
+> ⚠️ **사전 조건**: 이 스킬은 `sales-setup`이 완료돼 있어야 합니다 (최소 레벨 **L1**). 미달 시 0단계 점검에서 차단합니다.
+> 발송·발행물에 회사명·발신자 서명이 포함되므로 활성 영업 담당자(`team[active]`)와 `company.displayName`이 반드시 채워져 있어야 합니다.
+
 플러그 의뢰 단계에 맞는 템플릿을 제안하고, 사용자 초안을 다듬어 Gmail로 보내고, 의뢰 이력에 기록합니다.
 **사람에게 도달하는 작업이므로 발송은 항상 사용자 명시 승인 후에만 진행합니다.**
 
@@ -68,6 +71,20 @@ description: 영업 메일을 작성·발송·기록합니다. "메일 보내줘
 ---
 
 ## 절차
+
+### 0단계 — 사전 점검 (setup gate)
+
+스킬 진입 전 setup이 충분한지 확인합니다. 미달이면 진행하지 말고 사용자에게 `sales-setup` 실행을 안내합니다.
+
+```bash
+skills/sales-setup/scripts/check_setup.py --level L1 --quiet
+# exit 0 = pass, exit 1 = 차단 (사용자에게 sales-setup 실행 안내)
+```
+
+이 스킬의 요구 레벨: **L1** (Pluuug 자격증명 + team[active] name·email·signature + company.displayName). 실패 시 사용자에게 보여줄 안내:
+
+> "이 스킬을 실행하려면 sales-setup이 필요합니다. 부족한 항목이 있어 진행할 수 없습니다.
+> 자세한 부족 항목은 `skills/sales-setup/scripts/check_setup.py --level L1` 출력을 참고하세요."
 
 ### 1단계: 컨텍스트 수집
 

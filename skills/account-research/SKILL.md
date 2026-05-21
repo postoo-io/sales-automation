@@ -8,6 +8,8 @@ description: >
 
 # Account Research (고객사 리서치 & 리드 유효성 검증)
 
+> ⚠️ **사전 조건**: 이 스킬은 `sales-setup`이 완료돼 있어야 합니다 (최소 레벨 **L0**). 미달 시 0단계 점검에서 차단합니다.
+
 Pluuug 인입 데이터를 기반으로 고객사 정보를 수집하고, 부족한 정보를 파악한 뒤 리드가 유효한지 판단합니다.
 허위/스팸 의심 신호도 함께 제공하되 최종 판단은 항상 사용자에게 맡깁니다.
 
@@ -27,6 +29,20 @@ Pluuug 인입 데이터를 기반으로 고객사 정보를 수집하고, 부족
 ---
 
 ## 절차
+
+### 0단계 — 사전 점검 (setup gate)
+
+스킬 진입 전 setup이 충분한지 확인합니다. 미달이면 진행하지 말고 사용자에게 `sales-setup` 실행을 안내합니다.
+
+```bash
+skills/sales-setup/scripts/check_setup.py --level L0 --quiet
+# exit 0 = pass, exit 1 = 차단 (사용자에게 sales-setup 실행 안내)
+```
+
+이 스킬의 요구 레벨: **L0** (Pluuug 자격증명 존재 여부). 실패 시 사용자에게 보여줄 안내:
+
+> "이 스킬을 실행하려면 sales-setup이 필요합니다. 부족한 항목이 있어 진행할 수 없습니다.
+> 자세한 부족 항목은 `skills/sales-setup/scripts/check_setup.py --level L0` 출력을 참고하세요."
 
 ### 1단계 — Pluuug 의뢰 데이터 수집
 
