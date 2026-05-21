@@ -1,9 +1,9 @@
 {
     "name": "sales-automation",
-    "version": "0.2.0",
+    "version": "1.0.0",
     "description": "B2B 영업 자동화 워크플로우 — 리드 분석, 메일 전송, 견적서 작성을 Gmail, Drive, Google Calendar, Slack, 플러그(Pluuug)와 연동해 한 곳에서 처리합니다. 돈이나 고객에게 영향을 주는 작업은 항상 사용자 승인을 거칩니다.",
     "author": {
-        "name": "postoo",
+        "name": "pluuug",
         "url": "https://github.com/postoo-io"
     },
     "homepage": "https://github.com/postoo-io/sales-automation",
