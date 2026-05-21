@@ -100,22 +100,36 @@ def _load_dotenv_walk_up() -> None:
 def _os_credentials_paths() -> list[str]:
     """Return OS-standard credential file candidates, most-specific first.
 
-    macOS:   ~/Library/Application Support/pluuug/credentials.json
-    Linux:   $XDG_CONFIG_HOME/pluuug/credentials.json (default ~/.config)
-    Windows: %APPDATA%/pluuug/credentials.json
-    Fallback (all OS): ~/.pluuug/credentials.json
+    Order: new sales-automation/ paths first, then legacy pluuug/ paths.
+
+    New (canonical):
+      macOS:   ~/Library/Application Support/sales-automation/credentials.json
+      Linux:   $XDG_CONFIG_HOME/sales-automation/credentials.json
+      Windows: %APPDATA%/sales-automation/credentials.json
+      Fallback: ~/.sales-automation/credentials.json
+
+    Legacy (still honored so existing installs keep working):
+      <same shape, with /pluuug/ instead of /sales-automation/>
     """
     home = os.path.expanduser("~")
-    paths: list[str] = []
     system = platform.system()
-    if system == "Darwin":
-        paths.append(os.path.join(home, "Library", "Application Support", "pluuug", "credentials.json"))
-    elif system == "Windows":
-        appdata = os.environ.get("APPDATA") or os.path.join(home, "AppData", "Roaming")
-        paths.append(os.path.join(appdata, "pluuug", "credentials.json"))
-    else:
-        xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
-        paths.append(os.path.join(xdg, "pluuug", "credentials.json"))
+    paths: list[str] = []
+
+    def _push(dir_prefix_macos: str, dir_prefix_linux_win: str) -> None:
+        if system == "Darwin":
+            paths.append(os.path.join(home, "Library", "Application Support", dir_prefix_macos, "credentials.json"))
+        elif system == "Windows":
+            appdata = os.environ.get("APPDATA") or os.path.join(home, "AppData", "Roaming")
+            paths.append(os.path.join(appdata, dir_prefix_linux_win, "credentials.json"))
+        else:
+            xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
+            paths.append(os.path.join(xdg, dir_prefix_linux_win, "credentials.json"))
+
+    # new (canonical)
+    _push("sales-automation", "sales-automation")
+    paths.append(os.path.join(home, ".sales-automation", "credentials.json"))
+    # legacy (read-only fallback)
+    _push("pluuug", "pluuug")
     paths.append(os.path.join(home, ".pluuug", "credentials.json"))
     return paths
 

@@ -44,7 +44,7 @@ Pluuug 견적 항목 라이브러리에서 단가를 조회하고, 견적 초안
 
 빠진 값은 **한 번에 모아서 사용자에게 묻는다**. 항목별로 반복 질문 금지.
 
-**공급자 정보 자동 채움 (선택)**: `pluuug-setup`이 저장한 `business.json`이 있으면 견적서 공급자 섹션을 자동으로 채웁니다 — `company.legalName`, `company.registrationNumber`, `company.ceoName`, `company.address`, `company.homepage`. 기본 부가세·결제조건·유효기간도 `defaults.vatType` / `defaults.paymentTerms` / `defaults.quoteValidityDays`에서 가져옵니다. 사용자가 명시한 값이 항상 우선. 조회: `skills/pluuug-setup/scripts/business_info.py --show`.
+**공급자 정보 자동 채움 (선택)**: `sales-setup`이 저장한 `profile.json`이 있으면 견적서 공급자 섹션을 자동으로 채웁니다 — `company.legalName`, `company.registrationNumber`, `company.ceoName`, `company.address`, `company.homepage`, `team[active].name` / `team[active].email` (발행 영업 담당자 표기). 기본 부가세·결제조건·유효기간도 `defaults.vatType` / `defaults.paymentTerms` / `defaults.quoteValidityDays`에서 가져옵니다. 사용자가 명시한 값이 항상 우선. 조회: `skills/sales-setup/scripts/profile.py --show`.
 
 ---
 

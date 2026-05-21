@@ -209,14 +209,14 @@ WebFetch로 홈페이지 About·IR 페이지를 직접 파싱해 업종·사업 
 
 ## 비즈니스 프로필 가중치 (선택)
 
-`pluuug-setup`이 저장한 `business.json`이 있으면 리드 적합도 평가에 자사 컨텍스트를 반영합니다.
+`sales-setup`이 저장한 `profile.json`이 있으면 리드 적합도 평가에 자사 컨텍스트를 반영합니다.
 
 - `keywords.goodFit` 키워드가 의뢰 본문·회사 정보에 매칭되면 **+5점**씩 (최대 +15)
 - `keywords.outOfScope` 키워드가 매칭되면 **-10점**씩 — 우리 영역이 아닌 리드는 명시적으로 감점
-- `business.targetCustomers`와 회사 산업이 부합하면 리포트 끝에 "✅ 핵심 타깃 부합" 표시
+- `brand.targetCustomers`와 회사 산업이 부합하면 리포트 끝에 "✅ 핵심 타깃 부합" 표시 (+5점 추가 가산)
 - 모든 가중치는 어떤 키워드가 +/- 작용했는지 근거로 표시 (불투명한 점수 조정 금지)
 
-비즈니스 프로필이 없으면 가중치 없이 베이스 룰만 적용합니다. 조회: `skills/pluuug-setup/scripts/business_info.py --show`.
+비즈니스 프로필이 없으면 가중치 없이 베이스 룰만 적용합니다. 조회: `skills/sales-setup/scripts/profile.py --show`.
 
 ---
 
@@ -229,6 +229,8 @@ WebFetch로 홈페이지 About·IR 페이지를 직접 파싱해 업종·사업 
 - **허위문의 판단은 참고용**: "C 등급" 판단도 사용자가 최종 확인합니다. 자동 드롭·삭제는 하지 않습니다.
 - **사업자등록번호 웹 노출 금지**: 번호를 검색 쿼리에 직접 넣지 않고, 국세청 공식 진위확인 URL을 안내합니다.
 - **쓰기 작업은 pluuug-api 가드레일 준수**: POST/PATCH는 사용자 명시 승인 후에만 실행합니다.
+
+> **표준 변수 참조**: 리포트 내 담당자 서명 등은 `{{me.name}}`, `{{me.signature}}`, `{{client.companyName}}` 같은 표준 변수로 채워집니다. 자세한 변수 명세는 `skills/sales-setup/references/template_variables.md` 참조.
 
 ---
 
