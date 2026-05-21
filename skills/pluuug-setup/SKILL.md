@@ -1,15 +1,23 @@
 ---
 name: pluuug-setup
 description: >
-  Pluuug Open API 키를 OS 표준 위치에 영구 저장합니다. 세션마다 환경 변수를 다시 설정하지
-  않아도 `pluuug.py`가 자동으로 키를 로드하게 만듭니다. "pluuug 키 설정", "Pluuug API 등록",
-  "키 영구 저장", "처음 사용", "세션마다 키 다시 입력하기 싫어", "cowork에서 키 안 풀린다" —
-  처음 환경 세팅 또는 키 교체 시 사용합니다.
+  Pluuug Open API 키와 자사 비즈니스 프로필(법인명·산업·강점·서명·기본 결제조건 등)을 OS
+  표준 위치에 영구 저장합니다. 매 세션 환경 변수를 다시 설정하지 않아도 `pluuug.py`가
+  자동으로 키를 로드하고, 영업 스킬들이 자기소개·서명·견적서 공급자 정보를 일관되게 채웁니다.
+  "pluuug 키 설정", "Pluuug API 등록", "키 영구 저장", "처음 사용",
+  "세션마다 키 다시 입력하기 싫어", "cowork에서 키 안 풀린다",
+  "회사 정보 저장", "비즈니스 프로필 설정", "메일 서명 등록", "강점·핵심 서비스 등록" —
+  처음 환경 세팅, 키 교체, 자사 정보 업데이트 시 사용합니다.
 ---
 
-# Pluuug 키 설정 (pluuug-setup)
+# Pluuug 환경 설정 (pluuug-setup)
 
-Pluuug Open API의 `API Key` / `Secret Key`를 **사용자 OS의 표준 설정 위치**에 1회 저장해 두면, 이후 모든 세션·셸·도구에서 `pluuug.py`가 자동으로 키를 읽어옵니다. 매 세션마다 `export PLUUUG_API_KEY=...`를 다시 할 필요가 없어집니다.
+두 가지를 **사용자 OS의 표준 설정 위치**에 저장합니다:
+
+1. **인증 키** (`credentials.json`, mode 0600) — 매 세션 환경 변수 재설정 불필요
+2. **비즈니스 프로필** (`business.json`) — 자사 정보·강점·서명·기본 계약 조건. 영업 스킬들이 자동 참조해 메일·견적·콜에서 일관된 톤과 정보 사용
+
+각각 독립적으로 설치·교체할 수 있습니다 — 키만 갖고도 동작하고, 비즈니스 프로필만 있어도 동작합니다.
 
 ---
 
@@ -142,3 +150,66 @@ skills/pluuug-setup/scripts/install_credentials.py --show-path
 
 - **pluuug-api**: 이 스킬이 저장한 키를 자동 로드합니다 (`load_credentials()`). 다른 모든 영업 스킬은 pluuug-api를 거치므로 한 번 설치하면 전부 동작.
 - **다른 영업 스킬 (account-research, call-prep, …)**: 이 스킬을 먼저 1회 실행해 두면 인증 단계가 자동화됩니다.
+
+---
+
+# 비즈니스 프로필 (business.json)
+
+영업 스킬들이 메일·견적·콜에서 일관된 자사 정보를 쓰도록 회사 메타·강점·서명·기본 계약 조건을 저장합니다.
+
+저장 위치: 같은 디렉토리에 `business.json` (`<config-dir>/pluuug/business.json`). 권한은 일반 파일.
+
+스키마 전체는 [references/business_schema.md](references/business_schema.md) 참조 — 5개 섹션(`company` · `business` · `voice` · `defaults` · `keywords`).
+
+## 비즈니스 프로필 설치 흐름 (권장)
+
+```bash
+# 1. 빈 템플릿 받기
+skills/pluuug-setup/scripts/business_info.py --init > my-business.json
+
+# 2. 편집기로 채우기 (필요한 필드만 — 모두 선택)
+vim my-business.json
+
+# 3. 설치
+skills/pluuug-setup/scripts/business_info.py --from-file my-business.json
+```
+
+빠른 시작용 인터랙티브 모드 (핵심 필드 7개만):
+
+```bash
+skills/pluuug-setup/scripts/business_info.py
+# 법인명 / 표시명 / 도메인 / 산업 / 강점 3개 / 서명 한 줄
+```
+
+CI나 자동화에서는 stdin:
+
+```bash
+cat my-business.json | skills/pluuug-setup/scripts/business_info.py --from-stdin
+```
+
+조회·경로 확인:
+
+```bash
+skills/pluuug-setup/scripts/business_info.py --show       # 전체 JSON
+skills/pluuug-setup/scripts/business_info.py --show-path  # 경로만
+```
+
+교체할 때는 `--force` 추가.
+
+## 영업 스킬에서 비즈니스 프로필을 어떻게 활용하나
+
+| 스킬 | 활용 필드 | 효과 |
+|---|---|---|
+| **email-send** | `voice.signatureLines`, `company.displayName`, `business.strengths`, `voice.tone` | 모든 발송 메일 서명·소개 단락·톤이 자동 일관 |
+| **quote-writing** | `company.legalName/registrationNumber/ceoName/address`, `defaults.vatType/paymentTerms/quoteValidityDays` | 견적서 공급자 정보·기본 조건 자동 채움 |
+| **account-research** | `business.industry`, `business.targetCustomers`, `keywords.goodFit/outOfScope` | 리드 적합도 평가에 가중치 (우리 타깃과 부합/이탈) |
+| **call-prep** | `business.strengths`, `business.differentiation` | "콜에서 강조할 차별화 포인트" 가이드 |
+| **call-summary** | `voice.tone`, `voice.language` | 후속 메일 / 메모 톤 일관 |
+
+각 스킬은 **있으면 쓰고, 없으면 무시**합니다. 비즈니스 프로필이 없어도 모든 스킬은 동작합니다 — 다만 자기소개·서명·기본값이 generic하게 나옵니다.
+
+## 가드레일 (비즈니스 프로필)
+
+- **사업자번호·CEO명 등 민감 정보 포함 가능** — 외부 발송물에는 `quote-writing` 같이 명시적으로 그 정보를 쓰는 스킬에서만 노출됩니다. 메일 본문에 자동 노출되지 않습니다.
+- **파일 추측 금지** — 사용자가 채우지 않은 필드를 스킬이 임의로 만들어내지 않습니다 ("미상"으로 두거나 사용자에게 한 번 묻습니다).
+- **버전 호환** — 향후 스키마가 확장되면 `schemaVersion`이 올라갑니다. 현재 v1. 알려진 버전이 아니면 설치 시 거부.

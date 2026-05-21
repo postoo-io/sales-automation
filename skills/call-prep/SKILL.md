@@ -197,6 +197,18 @@ Slack 채널 매칭 룰·민감 키워드 카탈로그는 `references/slack_chan
 
 ---
 
+## 자사 강점 가이드 (선택)
+
+`pluuug-setup`으로 저장한 `business.json`이 있으면 콜 브리프의 "콜에서 확인할 포인트" 또는 "추천 다음 액션" 섹션에 **우리 강점·차별화**를 콜 포인트 후보로 노출합니다.
+
+- `business.strengths` → 콜에서 강조할 셀링 포인트 후보 (의뢰 요구사항과 매칭되는 것 우선)
+- `business.differentiation` → "왜 우리인가" 한 줄 (이의제기 대응용)
+- `company.displayName` → 자기소개 헤더
+
+비즈니스 프로필이 없으면 이 섹션은 생략됩니다. 조회: `skills/pluuug-setup/scripts/business_info.py --show`.
+
+---
+
 ## 가드레일
 
 | 규칙 | 상세 |
