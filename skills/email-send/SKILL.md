@@ -229,6 +229,19 @@ scripts/pluuug.py POST /v1/inquiry/{id}/text_history \
 
 ---
 
+## 자사 정보 자동 적용 (선택)
+
+`pluuug-setup`이 저장한 `business.json`이 있으면 메일 작성 시 자동 참조합니다.
+
+- `voice.signatureLines` → 모든 발송 메일의 서명
+- `voice.tone` → 톤 결정 (`formal_business` / `friendly` / `professional`)
+- `company.displayName` · `business.strengths` · `business.differentiation` → 자기소개 단락 (첫 응답·미팅 제안)
+- `company.homepage` → 인용 / 링크
+
+조회: `skills/pluuug-setup/scripts/business_info.py --show`. 프로필이 없으면 사용자에게 한 번 묻거나 일반 톤으로 작성합니다.
+
+---
+
 ## 가드레일
 
 | 규칙 | 내용 |
