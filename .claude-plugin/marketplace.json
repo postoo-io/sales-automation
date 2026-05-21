@@ -1,0 +1,28 @@
+{
+    "name": "postoo-sales-automation",
+    "owner": {
+        "name": "postoo",
+        "url": "https://github.com/postoo-io"
+    },
+    "metadata": {
+        "description": "B2B 영업 자동화 — Pluuug · Gmail · Google Drive · Google Calendar · Slack 연동 워크플로우. 리드 검증부터 콜 준비/요약, 견적서 작성·손익 분석, 단계별 메일 발송, 일일 브리핑까지 한 곳에서 처리합니다.",
+        "version": "0.1.0"
+    },
+    "plugins": [
+        {
+            "name": "sales-automation",
+            "description": "Pluuug Open API 기반 B2B 영업 자동화 플러그인. 7개 스킬이 의뢰 인입 → 콜 → 견적 → 메일 → 일일 브리핑까지 영업 워크플로우 전체를 처리합니다. 모든 발송·발행 작업은 사용자 승인 후에만 실행됩니다.",
+            "source": "./",
+            "strict": false,
+            "skills": [
+                "./skills/pluuug-api",
+                "./skills/account-research",
+                "./skills/call-prep",
+                "./skills/call-summary",
+                "./skills/daily-briefing",
+                "./skills/email-send",
+                "./skills/quote-writing"
+            ]
+        }
+    ]
+}
