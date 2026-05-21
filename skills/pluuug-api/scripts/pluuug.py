@@ -27,6 +27,7 @@ import hashlib
 import hmac
 import json as jsonlib
 import os
+import platform
 import sys
 import urllib.parse
 import urllib.request
@@ -73,12 +74,8 @@ def build_url(path: str, query_pairs: list[str]) -> str:
     return url
 
 
-def load_dotenv() -> None:
-    """Load PLUUUG_* vars from a .env file by walking up from script dir to project root.
-
-    Only sets vars that are not already in the environment (existing shell env wins).
-    Silently does nothing if no .env is found. stdlib-only.
-    """
+def _load_dotenv_walk_up() -> None:
+    """Load PLUUUG_* vars from a .env file by walking up from script dir."""
     here = os.path.dirname(os.path.abspath(__file__))
     for _ in range(6):
         candidate = os.path.join(here, ".env")
@@ -100,6 +97,69 @@ def load_dotenv() -> None:
         here = parent
 
 
+def _os_credentials_paths() -> list[str]:
+    """Return OS-standard credential file candidates, most-specific first.
+
+    macOS:   ~/Library/Application Support/pluuug/credentials.json
+    Linux:   $XDG_CONFIG_HOME/pluuug/credentials.json (default ~/.config)
+    Windows: %APPDATA%/pluuug/credentials.json
+    Fallback (all OS): ~/.pluuug/credentials.json
+    """
+    home = os.path.expanduser("~")
+    paths: list[str] = []
+    system = platform.system()
+    if system == "Darwin":
+        paths.append(os.path.join(home, "Library", "Application Support", "pluuug", "credentials.json"))
+    elif system == "Windows":
+        appdata = os.environ.get("APPDATA") or os.path.join(home, "AppData", "Roaming")
+        paths.append(os.path.join(appdata, "pluuug", "credentials.json"))
+    else:
+        xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
+        paths.append(os.path.join(xdg, "pluuug", "credentials.json"))
+    paths.append(os.path.join(home, ".pluuug", "credentials.json"))
+    return paths
+
+
+def _load_os_credentials() -> None:
+    """Load credentials from an OS-standard JSON file if present.
+
+    Accepts both {"api_key":..., "secret_key":...} and
+    {"PLUUUG_API_KEY":..., "PLUUUG_SECRET_KEY":...} shapes.
+    """
+    for path in _os_credentials_paths():
+        if not os.path.isfile(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = jsonlib.load(f)
+        except (jsonlib.JSONDecodeError, OSError):
+            continue
+        api = data.get("api_key") or data.get("PLUUUG_API_KEY")
+        secret = data.get("secret_key") or data.get("PLUUUG_SECRET_KEY")
+        if api and secret:
+            os.environ.setdefault("PLUUUG_API_KEY", api)
+            os.environ.setdefault("PLUUUG_SECRET_KEY", secret)
+            return
+
+
+def load_credentials() -> None:
+    """Resolve PLUUUG_* credentials in order:
+    1. existing environment variables (no-op if already set)
+    2. project .env file (walks up from this script)
+    3. OS-standard credential file (~/Library/Application Support, $XDG_CONFIG_HOME, %APPDATA%)
+    4. cross-platform fallback ~/.pluuug/credentials.json
+
+    Designed so that ephemeral sessions (e.g. Cowork) can keep keys at an
+    OS-standard location and avoid re-entering them every session.
+    """
+    if os.environ.get("PLUUUG_API_KEY") and os.environ.get("PLUUUG_SECRET_KEY"):
+        return
+    _load_dotenv_walk_up()
+    if os.environ.get("PLUUUG_API_KEY") and os.environ.get("PLUUUG_SECRET_KEY"):
+        return
+    _load_os_credentials()
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Pluuug Open API helper")
     p.add_argument("method", choices=["GET", "POST", "PATCH", "PUT", "DELETE"])
@@ -109,11 +169,16 @@ def main() -> int:
     p.add_argument("--raw", action="store_true", help="Print raw response (default: pretty JSON)")
     args = p.parse_args()
 
-    load_dotenv()
+    load_credentials()
     api_key = os.environ.get("PLUUUG_API_KEY")
     secret = os.environ.get("PLUUUG_SECRET_KEY")
     if not api_key or not secret:
-        print("[pluuug] set PLUUUG_API_KEY and PLUUUG_SECRET_KEY (env or .env)", file=sys.stderr)
+        print(
+            "[pluuug] credentials not found.\n"
+            "  Run the pluuug-setup skill, or set env vars / write .env in the project root.\n"
+            "  Lookup order: env vars → project .env → OS config → ~/.pluuug/credentials.json",
+            file=sys.stderr,
+        )
         return 2
 
     raw_body = args.json

@@ -15,6 +15,7 @@
             "source": "./",
             "strict": false,
             "skills": [
+                "./skills/pluuug-setup",
                 "./skills/pluuug-api",
                 "./skills/account-research",
                 "./skills/call-prep",

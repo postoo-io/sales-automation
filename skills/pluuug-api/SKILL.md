@@ -21,11 +21,22 @@ description: 플러그(Pluuug) Open API를 호출해 의뢰(리드)·고객·견
 
 ## 호출 방법
 
-### 사전 준비 (환경 변수)
+### 사전 준비 (인증 키 확보)
+
+`scripts/pluuug.py`는 아래 우선순위로 키를 자동으로 찾는다 — 일치하는 첫 번째에서 멈춤.
+
+| 순위 | 소스 | 용도 |
+|---|---|---|
+| 1 | 환경 변수 `PLUUUG_API_KEY` / `PLUUUG_SECRET_KEY` | 임시 오버라이드, CI |
+| 2 | 프로젝트 루트 `.env` | 로컬 개발 (gitignored) |
+| 3 | OS 표준 설정 위치 — macOS `~/Library/Application Support/pluuug/credentials.json` · Linux `$XDG_CONFIG_HOME/pluuug/credentials.json` · Windows `%APPDATA%\pluuug\credentials.json` | 영구 저장 (cowork·운영) |
+| 4 | `~/.pluuug/credentials.json` | 크로스플랫폼 fallback |
+
+가장 추천하는 패턴은 **3번 OS 표준 위치**다. 한 번 설치하면 새 세션·새 셸·새 머신(같은 사용자 홈)에서 모두 자동 동작한다. 설치는 `pluuug-setup` 스킬로 진행:
 
 ```bash
-export PLUUUG_API_KEY="..."        # 비즈니스 설정 > 웹훅 & API에서 발급
-export PLUUUG_SECRET_KEY="..."     # API Key와 함께 발급된 시크릿
+# 인터랙티브 (입력 시 화면에 키 노출 안 됨)
+skills/pluuug-setup/scripts/install_credentials.py
 ```
 
 키가 없으면 사용자에게 발급 절차(비즈니스 설정 > 웹훅 & API > Open API 탭, **Agency 플랜 필요**)를 안내한다 — 임의로 키를 만들거나 추측하지 않는다.
