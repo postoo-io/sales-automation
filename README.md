@@ -147,6 +147,36 @@ skills/pluuug-api/scripts/pluuug.py GET /v1/folder
 - **민감 정보 보호** — 손익/마진율 같은 내부 수치는 외부 발송물(메일·견적 PDF·플러그 히스토리)에 노출하지 않습니다.
 - **시크릿 출력 금지** — API Key, Secret Key를 채팅·로그·코드 주석에 노출하지 않습니다.
 
+## 버전 관리
+
+플러그 매니페스트 두 파일(`plugin.json` · `marketplace.json`)의 version을 락스텝으로 올려 매 push마다 사용자가 어떤 버전인지 추적 가능하게 합니다. `scripts/bump_version.sh` 헬퍼로 한 번에 동기 업데이트:
+
+```bash
+# 현재 버전 확인
+scripts/bump_version.sh --show
+
+# semver 컴포넌트 자동 증가
+scripts/bump_version.sh patch     # 0.2.0 → 0.2.1
+scripts/bump_version.sh minor     # 0.2.0 → 0.3.0
+scripts/bump_version.sh major     # 0.2.0 → 1.0.0
+
+# 명시 설정
+scripts/bump_version.sh --set 1.2.3
+
+# 그 후 커밋 + 푸시
+git add .claude-plugin/plugin.json .claude-plugin/marketplace.json
+git commit -m "Release vX.Y.Z"
+git push
+```
+
+semver 가이드 (정확한 룰보다 판단력):
+
+- **patch** — 버그 수정 · 본문 미세 수정 · 문서·내부 리팩토링
+- **minor** — 새 스킬 / 새 보조 자원 / 새 기능 (호환 유지)
+- **major** — 스키마 변경 · 스킬 이름 변경 · 호환 깨짐
+
+`scripts/bump_version.sh`는 두 파일의 version 불일치도 감지합니다 (exit 3).
+
 ## 디렉토리 구조
 
 ```
@@ -156,9 +186,16 @@ skills/pluuug-api/scripts/pluuug.py GET /v1/folder
 ├── .mcp.json                        # MCP 서버 등록 (gmail, drive, calendar, slack)
 ├── .env                             # Pluuug 키 (gitignored, 자동 로드)
 ├── skills/
-│   ├── sales-setup/                # 1회 키 설정 (OS 표준 위치 영구 저장)
+│   ├── sales-setup/                # 영업 자동화 초기 셋업 (키 + 프로필 + 게이트)
 │   │   ├── SKILL.md
-│   │   └── scripts/install_credentials.py
+│   │   ├── scripts/
+│   │   │   ├── install_credentials.py  # Pluuug 키 0600 영구 저장
+│   │   │   ├── profile.py              # 통합 프로필 (회사·팀·브랜드·상품·멘트) v2
+│   │   │   ├── render_template.py      # mustache 변수 치환 (profile + Pluuug 자동 합성)
+│   │   │   └── check_setup.py          # L0/L1/L2 사전 점검 게이트
+│   │   └── references/
+│   │       ├── profile_schema.md       # 7섹션 스키마 v2
+│   │       └── template_variables.md   # 표준 변수 네임스페이스 명세
 │   ├── pluuug-api/                  # 모든 Pluuug API 호출의 단일 진입점
 │   │   ├── SKILL.md
 │   │   ├── scripts/

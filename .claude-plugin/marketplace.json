@@ -6,7 +6,7 @@
     },
     "metadata": {
         "description": "B2B 영업 자동화 — Pluuug · Gmail · Google Drive · Google Calendar · Slack 연동 워크플로우. 리드 검증부터 콜 준비/요약, 견적서 작성·손익 분석, 단계별 메일 발송, 일일 브리핑까지 한 곳에서 처리합니다.",
-        "version": "0.1.0"
+        "version": "0.2.0"
     },
     "plugins": [
         {
