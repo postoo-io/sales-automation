@@ -27,15 +27,22 @@ PLUGIN_JSON="$REPO_ROOT/.claude-plugin/plugin.json"
 MARKETPLACE_JSON="$REPO_ROOT/.claude-plugin/marketplace.json"
 
 current_version() {
-  python3 - <<PY
-import json
-plugin = json.load(open("$PLUGIN_JSON"))
-mp = json.load(open("$MARKETPLACE_JSON"))
+  PLUGIN_JSON="$PLUGIN_JSON" MARKETPLACE_JSON="$MARKETPLACE_JSON" \
+  python3 - <<'PY'
+import json, os, sys
+plugin = json.load(open(os.environ["PLUGIN_JSON"]))
+mp = json.load(open(os.environ["MARKETPLACE_JSON"]))
 pv = plugin.get("version")
 mv = mp.get("metadata", {}).get("version")
-if pv != mv:
-    print(f"[bump] inconsistent: plugin.json={pv}, marketplace.json={mv}", file=__import__("sys").stderr)
-    __import__("sys").exit(3)
+plugin_versions = [p.get("version") for p in mp.get("plugins", []) if isinstance(p, dict)]
+all_same = (pv == mv) and all(v == pv for v in plugin_versions)
+if not all_same:
+    print(f"[bump] inconsistent versions:", file=sys.stderr)
+    print(f"  plugin.json                 = {pv}", file=sys.stderr)
+    print(f"  marketplace.metadata.version = {mv}", file=sys.stderr)
+    for i, v in enumerate(plugin_versions):
+        print(f"  marketplace.plugins[{i}].version = {v}", file=sys.stderr)
+    sys.exit(3)
 print(pv)
 PY
 }
@@ -69,17 +76,25 @@ _set_version_py() {
   python3 - <<'PY'
 import json, os
 new = os.environ["NEW_VER"]
-for path, keys in ((os.environ["PLUGIN_JSON"], ["version"]),
-                   (os.environ["MARKETPLACE_JSON"], ["metadata", "version"])):
-    with open(path) as f:
-        data = json.load(f)
-    cur = data
-    for k in keys[:-1]:
-        cur = cur[k]
-    cur[keys[-1]] = new
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
-        f.write("\n")
+
+# plugin.json — single top-level version
+with open(os.environ["PLUGIN_JSON"]) as f:
+    data = json.load(f)
+data["version"] = new
+with open(os.environ["PLUGIN_JSON"], "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=4, ensure_ascii=False)
+    f.write("\n")
+
+# marketplace.json — metadata.version + every plugins[i].version
+with open(os.environ["MARKETPLACE_JSON"]) as f:
+    mp = json.load(f)
+mp.setdefault("metadata", {})["version"] = new
+for plugin in mp.get("plugins", []):
+    if isinstance(plugin, dict):
+        plugin["version"] = new
+with open(os.environ["MARKETPLACE_JSON"], "w", encoding="utf-8") as f:
+    json.dump(mp, f, indent=4, ensure_ascii=False)
+    f.write("\n")
 PY
 }
 

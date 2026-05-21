@@ -23,7 +23,8 @@
                 "./skills/daily-briefing",
                 "./skills/email-send",
                 "./skills/quote-writing"
-            ]
+            ],
+            "version": "0.2.0"
         }
     ]
 }
