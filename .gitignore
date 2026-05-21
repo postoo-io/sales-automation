@@ -1,0 +1,7 @@
+.omc/
+.DS_Store
+.env
+.env.*
+node_modules/
+.claude/
+examples/real-runs/
