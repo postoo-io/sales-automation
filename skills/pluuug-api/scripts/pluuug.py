@@ -189,7 +189,7 @@ def main() -> int:
     if not api_key or not secret:
         print(
             "[pluuug] credentials not found.\n"
-            "  Run the pluuug-setup skill, or set env vars / write .env in the project root.\n"
+            "  Run the sales-setup skill, or set env vars / write .env in the project root.\n"
             "  Lookup order: env vars → project .env → OS config → ~/.pluuug/credentials.json",
             file=sys.stderr,
         )
